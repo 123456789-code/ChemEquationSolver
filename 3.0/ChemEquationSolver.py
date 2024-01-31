@@ -213,8 +213,9 @@ class Matrix:
         return self
 
     def NullSpace(self):
+        print(self)
         self.reduced_row_echelon_form()
-        # print(self)
+        print(self)
         null_space = []
         free = list(set(range(len(self.list[0]))) - set(self.major))
         for i in range(len(free)):
@@ -280,7 +281,7 @@ class Thing:
         dict_cache = {}
         while position < len(string):
             char = string[position]
-            if char == "":
+            if char == "(":
                 if name_cache != "":
                     element_dict = self.add_dict(element_dict, {name_cache: (1 if num_cache == "" else int(num_cache))})
                     name_cache = ""
@@ -297,7 +298,7 @@ class Thing:
                                                      self.times_dict(dict_cache,
                                                                      (1 if num_cache == "" else int(num_cache))))
                         dict_cache = {}
-                        name_cache = char
+                        name_cache = ""
                         num_cache = ""
                         position -= 1
                         break
@@ -323,7 +324,7 @@ class Thing:
             del element_dict["("]
         if ")" in element_dict:
             del element_dict[")"]
-        # print(element_dict)
+        print(element_dict)
         return element_dict, position
 
 
