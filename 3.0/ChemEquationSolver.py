@@ -6,7 +6,8 @@ class RationalNumber:
         self.p, self.q = p, q
 
     def gcd(self, a, b):
-        (a, b) = (a, b) if a >= b else (b, a)
+        if a < b:
+            a, b = b, a
         if b == 0:
             return 1
         else:
@@ -215,9 +216,9 @@ class Matrix:
         return self
 
     def NullSpace(self):
-        print(self)
+        # print(self)
         self.reduced_row_echelon_form()
-        print(self)
+        # print(self)
         null_space = []
         free = list(set(range(len(self.list[0]))) - set(self.major))
         for i in range(len(free)):
@@ -225,7 +226,7 @@ class Matrix:
             outcome_cache = copy.deepcopy(self.outcome)
             for j in range(len(free)):
                 list_cache.append([RationalNumber(0)] * free[j] + [RationalNumber(1)] + [RationalNumber(0)] * (
-                            len(self.list[0]) - free[j] - 1))
+                        len(self.list[0]) - free[j] - 1))
                 if j == i:
                     outcome_cache.append(RationalNumber(-1))
                 else:
@@ -326,7 +327,6 @@ class Thing:
             del element_dict["("]
         if ")" in element_dict:
             del element_dict[")"]
-        print(element_dict)
         return element_dict, position
 
 
@@ -440,7 +440,7 @@ class Equation:
                 string = ""
                 for coefficient in self.coefficient:
                     string += self.single_equation_str(coefficient) + "\n"
-                return string
+                return string.strip()
             else:
                 return self.single_equation_str(self.coefficient)
 
