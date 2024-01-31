@@ -1,4 +1,6 @@
 import copy
+
+
 class RationalNumber:
     def __init__(self, p=0, q=1):
         self.p, self.q = p, q
