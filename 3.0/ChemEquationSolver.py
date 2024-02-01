@@ -1,11 +1,9 @@
-import copy
-
-
 class RationalNumber:
     def __init__(self, p=0, q=1):
         self.p, self.q = p, q
 
-    def gcd(self, a, b):
+    @staticmethod
+    def gcd(a, b):
         if a < b:
             a, b = b, a
         if b == 0:
@@ -98,7 +96,8 @@ class Matrix:
         self.list = lst
         self.outcome = outcome
         self.upper_triangular_form_ed = False
-        self.del_zero_row_ed = False
+        self.diagonal_eliminate_ed = False
+        self.row_echelon_form_ed = False
         self.reduced_row_echelon_form_ed = False
         self.major = []
 
@@ -125,7 +124,7 @@ class Matrix:
             del self.outcome[i]
         return self
 
-    def upper_triangular_form(self):  # 行阶梯矩阵
+    def upper_triangular_form(self):
         for i in range(len(self.list[0])):
             if i >= len(self.list):
                 break
@@ -159,10 +158,13 @@ class Matrix:
                 for k in range(i, len(self.list[0])):
                     self.list[j][k] -= factor * self.list[-1 - i][k]
                 self.outcome[j] -= factor * self.outcome[-1 - i]
+        self.diagonal_eliminate_ed = True
         return self
 
     def solve(self):
-        self.upper_triangular_form()
+        # print(self)
+        if not self.upper_triangular_form_ed:
+            self.upper_triangular_form()
         # print(self)
         if len(self.list[0]) > len(self.list):
             return ["Infinity_solution"]
@@ -184,8 +186,11 @@ class Matrix:
                     coefficient.append(self.outcome[i] / self.list[i][i])
             return coefficient
 
-    def reduced_row_echelon_form(self):  # 会损坏outcome，请保证outcome全为0
+    def row_echelon_form(self):
+        if self.outcome != [RationalNumber(0)] * len(self.outcome):
+            raise RuntimeError("row_echelon_form() can't be used when outcome includes not-zero rational number")
         i, main_position = 0, 0
+        self.major = []
         while i < len(self.list) and main_position < len(self.list[0]):
             if self.list[i][main_position] == RationalNumber(0):
                 for j in range(i + 1, len(self.list)):
@@ -203,6 +208,12 @@ class Matrix:
             i += 1
             main_position += 1
         self.del_zero_row()
+        self.row_echelon_form_ed = True
+        return self
+
+    def reduced_row_echelon_form(self):
+        if not self.row_echelon_form_ed:
+            self.row_echelon_form()
         for i in range(len(self.major)):
             if self.list[i][self.major[i]] != RationalNumber(1):
                 for j in range(self.major[i] + 1, len(self.list[0])):
@@ -215,12 +226,14 @@ class Matrix:
         self.reduced_row_echelon_form_ed = True
         return self
 
-    def NullSpace(self):
+    def null_space(self):
         # print(self)
-        self.reduced_row_echelon_form()
+        if not self.reduced_row_echelon_form_ed:
+            self.reduced_row_echelon_form()
         # print(self)
         null_space = []
         free = list(set(range(len(self.list[0]))) - set(self.major))
+        import copy
         for i in range(len(free)):
             list_cache = copy.deepcopy(self.list)
             outcome_cache = copy.deepcopy(self.outcome)
@@ -233,11 +246,13 @@ class Matrix:
                     outcome_cache.append(RationalNumber(0))
             matrix_cache = Matrix(list_cache, outcome_cache)
             null_space.append(matrix_cache.solve())
+        del copy
         return null_space
 
 
 class Thing:
-    def add_dict(self, d1, d2):
+    @staticmethod
+    def add_dict(d1, d2):
         for k, v in d2.items():
             if k in d1:
                 d1[k] += v
@@ -245,7 +260,8 @@ class Thing:
                 d1[k] = v
         return d1
 
-    def times_dict(self, d, n):
+    @staticmethod
+    def times_dict(d, n):
         for i in d.keys():
             d[i] *= n
         return d
@@ -272,7 +288,7 @@ class Thing:
             self.elements = self.separate(string.replace(" ", "").replace("\n", ""), 0)[0]
 
     def __str__(self):
-        return str(self.elements) + "\nElectron: " + self.electron
+        return str(self.elements) + "\nElectron: " + str(self.electron)
 
     def __repr__(self):
         return str(self)
@@ -323,10 +339,6 @@ class Thing:
                                      self.times_dict(dict_cache, (1 if num_cache == "" else int(num_cache))))
         if "" in element_dict:
             del element_dict[""]
-        if "(" in element_dict:
-            del element_dict["("]
-        if ")" in element_dict:
-            del element_dict[")"]
         return element_dict, position
 
 
@@ -336,6 +348,7 @@ class Equation:
         self.coefficient_in = []
         self.coefficient = []
         self.flag = True  # True为未指定系数
+        string = string.replace("[", "(").replace("]", ")")
         lst = string.split("--")
         for i in lst[0].split(" + "):
             i = i.replace(" ", "").replace("\n", "")
@@ -388,7 +401,7 @@ class Equation:
         outcome_cache = [RationalNumber(0)] * len(matrix_cache)
         if self.flag:
             matrix1 = Matrix(matrix_cache, outcome_cache).del_zero_row()
-            null_space = matrix1.NullSpace()
+            null_space = matrix1.null_space()
             # print(null_space)
             for i in range(len(null_space)):
                 lcm = 1
@@ -449,8 +462,8 @@ class Equation:
 
 
 # try:
-a = input()
-equation_in = Equation(a)
+input_ = input()
+equation_in = Equation(input_)
 equation_in.solve()
 print(equation_in)
 # except:
