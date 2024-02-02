@@ -288,7 +288,7 @@ class Thing:
             self.elements = self.separate(string.replace(" ", "").replace("\n", ""), 0)[0]
 
     def __str__(self):
-        return str(self.elements) + "\nElectron: " + str(self.electron)
+        return str(self.elements) + ", Electron: " + str(self.electron)
 
     def __repr__(self):
         return str(self)
@@ -343,44 +343,12 @@ class Thing:
 
 
 class Equation:
-    def __init__(self, string):
+    def __init__(self, list_in):
         self.things = []
-        self.coefficient_in = []
         self.coefficient = []
-        self.flag = True  # True为未指定系数
-        lst = string.split("--")
-        for i in lst[0].split(" + "):
+        for i in list_in:
             i = i.replace(" ", "").replace("\n", "")
-            if i[0].isdigit() or i[0] == "-":
-                self.flag = False
-                cache = 0
-                while i[cache].isdigit() or i[cache] in "/-":
-                    cache += 1
-                if "/" in i[:cache]:
-                    lst_cache = i[:cache].split("/")
-                    self.coefficient_in.append(RationalNumber(int(lst_cache[0]), int(lst_cache[1])))
-                else:
-                    self.coefficient_in.append(RationalNumber(int(i[:cache])))
-                self.things.append(Thing(i[cache:]))
-            else:
-                self.coefficient_in.append(RationalNumber(0))
-                self.things.append(Thing(i))
-        for i in lst[1].split(" + "):
-            i = i.replace(" ", "").replace("\n", "")
-            if i[0].isdigit() or i[0] == "-":
-                self.flag = False
-                cache = 0
-                while i[cache].isdigit() or i[cache] in "/-":
-                    cache += 1
-                if "/" in i[:cache]:
-                    lst_cache = i[:cache].split("/")
-                    self.coefficient_in.append(RationalNumber(-int(lst_cache[0]), int(lst_cache[1])))
-                else:
-                    self.coefficient_in.append(RationalNumber(-int(i[:cache])))
-                self.things.append(Thing(i[cache:]))
-            else:
-                self.coefficient_in.append(RationalNumber(0))
-                self.things.append(Thing(i))
+            self.things.append(Thing(i))
         self.element_list = []
         for i in self.things:
             self.element_list += i.elements.keys()
@@ -398,30 +366,17 @@ class Equation:
             lst.append(RationalNumber(i.electron))
         matrix_cache.append(lst)
         outcome_cache = [RationalNumber(0)] * len(matrix_cache)
-        if self.flag:
-            matrix1 = Matrix(matrix_cache, outcome_cache).del_zero_row()
-            null_space = matrix1.null_space()
-            # print(null_space)
-            for i in range(len(null_space)):
-                lcm = 1
-                for j in null_space[i]:
-                    lcm = lcm * j.q // j.gcd(lcm, j.q)
-                lcm_ = RationalNumber(lcm)
-                for j in range(len(null_space[i])):
-                    null_space[i][j] *= lcm_
-            self.coefficient = null_space
-        else:
-            for i in range(len(self.coefficient_in)):
-                if self.coefficient_in[i] != RationalNumber(0):
-                    matrix_cache.append([RationalNumber(0)] * i + [RationalNumber(1)] +
-                                        [RationalNumber(0)] * (len(matrix_cache[0]) - i - 1))
-                    outcome_cache.append(self.coefficient_in[i])
-            matrix1 = Matrix(matrix_cache, outcome_cache).del_zero_row()
-            self.coefficient = matrix1.solve()
-            for i in range(len(self.coefficient)):
-                if self.coefficient_in[i] != RationalNumber(0) and self.coefficient_in[i] != self.coefficient[i]:
-                    self.coefficient = ["No_solution"]
-                    break
+        matrix1 = Matrix(matrix_cache, outcome_cache).del_zero_row()
+        null_space = matrix1.null_space()
+        # print(null_space)
+        for i in range(len(null_space)):
+            lcm = 1
+            for j in null_space[i]:
+                lcm = lcm * j.q // j.gcd(lcm, j.q)
+            lcm_ = RationalNumber(lcm)
+            for j in range(len(null_space[i])):
+                null_space[i][j] *= lcm_
+        self.coefficient = null_space
 
     def single_equation_str(self, coefficient):
         left_string, right_string = "", ""
@@ -443,27 +398,29 @@ class Equation:
         return left_string[:-3] + " == " + right_string[:-3]
 
     def __str__(self):
-        if self.coefficient == ["No_solution"]:
-            return "无解"
-        elif self.coefficient == ["Infinity_solution"]:
-            return "无穷解"
-        else:
-            if self.flag:
-                string = ""
-                for coefficient in self.coefficient:
-                    string += self.single_equation_str(coefficient) + "\n"
-                return string.strip()
-            else:
-                return self.single_equation_str(self.coefficient)
+        string = ""
+        for coefficient in self.coefficient:
+            string += self.single_equation_str(coefficient) + "\n"
+        return string.strip()
 
     def __repr__(self):
         return str(self)
 
 
 # try:
-input_ = input()
-equation_in = Equation(input_)
-equation_in.solve()
-print(equation_in)
+lst = []
+string = "none"
+while string != "":
+    string = input().strip()
+    lst.append(string)
+lst.pop()
+if len(lst) == 1:
+    print("一个物质反应个屁啊")
+elif len(lst) == 0:
+    print("你tm一个物质都没有")
+else:
+    equation = Equation(lst)
+    equation.solve()
+    print(equation)
 # except:
 #     print("出现错误，请更正后重试")
