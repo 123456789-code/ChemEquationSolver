@@ -3,7 +3,7 @@ class RationalNumber:
         self.p, self.q = p, q
 
     @staticmethod
-    def gcd(a, b):
+    def gcd(a: int, b: int) -> int:
         if a < b:
             a, b = b, a
         if b == 0:
@@ -161,7 +161,7 @@ class Matrix:
         self.diagonal_eliminate_ed = True
         return self
 
-    def solve(self):
+    def solve(self) -> [RationalNumber]:
         # print(self)
         if not self.upper_triangular_form_ed:
             self.upper_triangular_form()
@@ -226,7 +226,7 @@ class Matrix:
         self.reduced_row_echelon_form_ed = True
         return self
 
-    def null_space(self):
+    def null_space(self) -> [[RationalNumber]]:
         # print(self)
         if not self.reduced_row_echelon_form_ed:
             self.reduced_row_echelon_form()
@@ -252,7 +252,7 @@ class Matrix:
 
 class Thing:
     @staticmethod
-    def add_dict(d1, d2):
+    def add_dict(d1: dict, d2: dict) -> dict:
         for k, v in d2.items():
             if k in d1:
                 d1[k] += v
@@ -261,7 +261,7 @@ class Thing:
         return d1
 
     @staticmethod
-    def times_dict(d, n):
+    def times_dict(d: dict, n: int) -> dict:
         for i in d.keys():
             d[i] *= n
         return d
