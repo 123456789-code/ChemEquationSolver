@@ -305,125 +305,64 @@ class Thing:
         return element_dict, position
 
 
-class Equation:
-    def __init__(self, string):
-        self.things = []
-        self.coefficient_in = []
-        self.coefficient = []
-        self.flag = True  # True为未指定系数
-        lst = string.split("--")
-        for i in lst[0].split(" + "):
-            i = i.replace(" ", "").replace("\n", "")
-            if i[0].isdigit() or i[0] == "-":
-                self.flag = False
-                cache = 0
-                while i[cache].isdigit() or i[cache] in "/-":
-                    cache += 1
-                self.coefficient_in.append(RationalNumber(i[:cache]))
-                self.things.append(Thing(i[cache:]))
-            else:
-                self.coefficient_in.append(R0)
-                self.things.append(Thing(i))
-        for i in lst[1].split(" + "):
-            i = i.replace(" ", "").replace("\n", "")
-            if i[0].isdigit() or i[0] == "-":
-                self.flag = False
-                cache = 0
-                while i[cache].isdigit() or i[cache] in "/-":
-                    cache += 1
-                self.coefficient_in.append(RationalNumber(i[:cache]) * RN1)
-                self.things.append(Thing(i[cache:]))
-            else:
-                self.coefficient_in.append(R0)
-                self.things.append(Thing(i))
-        self.element_list = []
-        for i in self.things:
-            self.element_list += i.elements.keys()
-        self.element_list = list(set(self.element_list))
-
-    def solve(self):
+def guess_equation(lst):
+    if len(lst) == 1:
+        return "一个物质反应个屁啊"
+    elif len(lst) == 0:
+        return "你tm一个物质都没有"
+    else:
+        things = []
+        for i in lst:
+            things.append(Thing(i))
+        element_list = []
+        for i in things:
+            element_list += i.elements.keys()
+        element_list = list(set(element_list))
         matrix_cache = list(list(RationalNumber(j.elements[i]) if i in j.elements else R0
-                                 for j in self.things) for i in self.element_list)
-        matrix_cache.append(list(RationalNumber(i.electron) for i in self.things))
+                                 for j in things) for i in element_list)
+        matrix_cache.append(list(RationalNumber(i.electron) for i in things))
         outcome_cache = [R0] * len(matrix_cache)
-        if self.flag:
-            matrix1 = Matrix(matrix_cache, outcome_cache)
-            null_space = matrix1.null_space()
-            for i in range(len(null_space)):
-                lcm = 1
-                for j in null_space[i]:
-                    lcm = lcm * j.q // j.gcd(lcm, j.q)
-                lcm_ = RationalNumber(lcm)
-                for j in range(len(null_space[i])):
-                    null_space[i][j] *= lcm_
-            self.coefficient = null_space if null_space else ["No_solution"]
-        else:
-            for i in range(len(self.coefficient_in)):
-                if self.coefficient_in[i] != R0:
-                    matrix_cache.append([R0] * i + [R1] + [R0] * (len(matrix_cache[0]) - i - 1))
-                    outcome_cache.append(self.coefficient_in[i])
-            matrix1 = Matrix(matrix_cache, outcome_cache)
-            self.coefficient = matrix1.solve()
-            for i in range(len(self.coefficient)):
-                if self.coefficient_in[i] != self.coefficient[i]:
-                    self.coefficient = ["No_solution"]
-                    break
-
-    def single_equation_str(self, coefficient):
-        left_string, right_string = "", ""
-        for i in range(len(coefficient)):
-            if coefficient[i] > R0:
-                if coefficient[i] != R1:
-                    left_string += str(coefficient[i])
-                    if not coefficient[i].isinteger():
-                        left_string += " "
-                left_string += self.things[i].string + " + "
-            elif coefficient[i] < R0:
-                if coefficient[i] != RN1:
-                    right_string += str(abs(coefficient[i]))
-                    if not coefficient[i].isinteger():
-                        right_string += " "
-                right_string += self.things[i].string + " + "
-            else:
-                pass
-        return left_string[:-3] + " == " + right_string[:-3]
-
-    def __str__(self):
-        if self.coefficient == ["No_solution"]:
-            return "无解"
-        elif self.coefficient == ["Infinity_solution"]:
-            return "无穷解"
-        else:
-            if self.flag:
-                string = ""
-                for coefficient in self.coefficient:
-                    string += self.single_equation_str(coefficient) + "\n"
-                return string.strip()
-            else:
-                return self.single_equation_str(self.coefficient)
-
-    def __repr__(self):
-        return str(self)
+        matrix1 = Matrix(matrix_cache, outcome_cache)
+        null_space = matrix1.null_space()
+        for i in range(len(null_space)):
+            lcm = 1
+            for j in null_space[i]:
+                lcm = lcm * j.q // j.gcd(lcm, j.q)
+            lcm_ = RationalNumber(lcm)
+            for j in range(len(null_space[i])):
+                null_space[i][j] *= lcm_
+        if not null_space:
+            return "无反应发生"
+        string = ""
+        for coefficient in null_space:
+            left_string, right_string = "", ""
+            for i in range(len(coefficient)):
+                if coefficient[i] > R0:
+                    if coefficient[i] != R1:
+                        left_string += str(coefficient[i])
+                        if not coefficient[i].isinteger():
+                            left_string += " "
+                    left_string += things[i].string + " + "
+                elif coefficient[i] < R0:
+                    if coefficient[i] != RN1:
+                        right_string += str(abs(coefficient[i]))
+                        if not coefficient[i].isinteger():
+                            right_string += " "
+                    right_string += things[i].string + " + "
+                else:
+                    pass
+            string += left_string[:-3] + " == " + right_string[:-3] + "\n"
+        string = string.strip()
+        return string
 
 
-def chem_equation_solve(string):
-    equation_in = Equation(string)
-    equation_in.solve()
-    return str(equation_in)
-
-
-if __name__ == '__main__':
-    print(chem_equation_solve(input(
-        "Wang125510 (C)\n"
-        "输入规范：\n"
-        "下标数字直接写出\n"
-        "离子所带电荷写在方括号内,写在物质后面\n"
-        "电子为\"e[-]\"\n"
-        "支持小括号的嵌套\n"
-        "支持在物质前指定系数，分数可用\"/\"表示分数线\n"
-        "系数可以为负数，表示此物质移到等号另一边\n"
-        "物质内可随意增加空格(输出是会省略)，物质末可随意增减右括号(输出时保持原样)\n"
-        "物质间由\" + \"隔开，等号为\" -- \"\n"
-        "请输入方程:\n"
-    )))
+if __name__ == "__main__":
+    print("请输入物质:")
+    lst = []
+    string = "none"
+    while string != "":
+        string = input().strip()
+        lst.append(string)
+    lst.pop()
+    print(guess_equation(lst))
     os.system("pause>nul")
